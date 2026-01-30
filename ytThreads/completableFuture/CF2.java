@@ -11,27 +11,34 @@ public class CF2 {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-        List<CompletableFuture<Void>> cfList = new ArrayList<>();
+        List<CompletableFuture<Integer>> cfList = new ArrayList<>();
 
         Long start = System.currentTimeMillis();
 
         for (int i = 0; i < 100; i++) {
             int finalI = i;
 
-            CompletableFuture<Void> cf = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Integer> cf = CompletableFuture.supplyAsync(() -> {
+                int computedResult = finalI * finalI;
                 try {
-                    System.out.println("Thread - " + Thread.currentThread().getName() + " : Square of " + finalI + " is : " + finalI * finalI);
+                    System.out.println("Thread - " + Thread.currentThread().getName() + " : Square of " + finalI + " is : " + computedResult);
                     Thread.sleep(3000);
                 } catch (Exception e) {
                     Thread.currentThread().interrupt();
                 }
-                return null;
+                return computedResult;
             }, executorService);
 
             cfList.add(cf);
         }
         CompletableFuture<Void> allOf = CompletableFuture.allOf(cfList.toArray(new CompletableFuture[0]));
         allOf.join(); // Wait for all to complete
+
+        List<Integer> results = cfList.stream()
+                .map(CompletableFuture::join)
+                .toList();
+
+        System.out.println("Results: " + results);
 
         System.out.println("All tasks are completed");
         Long end = System.currentTimeMillis();
